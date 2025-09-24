@@ -5,6 +5,8 @@ import {RebaseToken} from "../src/RebaseToken.sol";
 import {IRebaseToken} from "../src/interfaces/IRebaseToken.sol";
 import {Vault} from "../src/Vault.sol";
 import {Test, console} from "forge-std/Test.sol";
+import {Ownable} from "@openzeppelin/contracts/access/Ownable.sol";
+import {IAccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 
 contract RebaseTokenTest is Test {
     RebaseToken private rebaseToken;
@@ -140,5 +142,45 @@ contract RebaseTokenTest is Test {
 
         assertEq(rebaseToken.getUserInterestRate(user), 5e10);
         assertEq(rebaseToken.getUserInterestRate(user2), 5e10);
+    }
+
+    function testCannotSetInterestRate(uint256 newInterestRate) public {
+        vm.prank(user);
+        vm.expectPartialRevert(Ownable.OwnableUnauthorizedAccount.selector);
+        rebaseToken.setInterestRate(newInterestRate);
+    }
+
+    function testCannotCallMintAndBurn() public {
+        vm.startPrank(user);
+        vm.expectPartialRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
+        rebaseToken.mint(user, 1e18);
+        vm.expectPartialRevert(IAccessControl.AccessControlUnauthorizedAccount.selector);
+        rebaseToken.burn(user, 1e18);
+        vm.stopPrank();
+    }
+
+    function testGetPrincipleAmount(uint256 _amount) public {
+        _amount = bound(_amount, 1e5, type(uint32).max);
+        vm.deal(user, _amount);
+        vm.prank(user);
+        vault.deposit{value: _amount}();
+        assertEq(rebaseToken.principleBalanceOf(user), _amount);
+
+        vm.warp(block.timestamp + 1 hours);
+        assertEq(rebaseToken.principleBalanceOf(user), _amount);
+    }
+
+    function testGetRebaseTokenAddress() public view {
+        assertEq(vault.getRebaseToken(), address(rebaseToken));
+    }
+
+    function testInterestRateCanOnlyDecrease(uint256 newInterestRate) public {
+        uint256 currentRate = rebaseToken.getInterestRate();
+        newInterestRate = bound(newInterestRate, currentRate + 1, type(uint96).max);
+        vm.prank(owner);
+        vm.expectPartialRevert(RebaseToken.RebaseToken__InterestRateCanOnlyDecrease.selector);
+        rebaseToken.setInterestRate(newInterestRate);
+
+        assertEq(rebaseToken.getInterestRate(), currentRate);
     }
 }
