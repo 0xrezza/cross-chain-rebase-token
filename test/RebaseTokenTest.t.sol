@@ -46,4 +46,28 @@ contract RebaseTokenTest is Test {
         assertApproxEqAbs(endBalance - middleBalance, middleBalance - startBalance, 1);
         vm.stopPrank();
     }
+
+    function testRedeemStraightAway(uint256 _amount) public {
+        _amount = bound(_amount, 1e6, type(uint96).max);
+
+        vm.startPrank(user);
+        vm.deal(user, _amount);
+        vault.deposit{value: _amount}();
+
+        uint256 startBalance = rebaseToken.balanceOf(user);
+        console.log("Start balance:", startBalance);
+        assertEq(startBalance, _amount);
+
+        // vault.redeem(startBalance);
+        vault.redeem(type(uint256).max);
+
+        uint256 endBalance = address(user).balance;
+        console.log("End balance:", endBalance);
+        assertEq(endBalance, _amount);
+
+        uint256 finalTokenBalance = rebaseToken.balanceOf(user);
+        console.log("Final token balance:", finalTokenBalance);
+        assertEq(finalTokenBalance, 0);
+        vm.stopPrank();
+    }
 }
