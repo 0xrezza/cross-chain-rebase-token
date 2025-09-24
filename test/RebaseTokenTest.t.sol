@@ -12,6 +12,7 @@ contract RebaseTokenTest is Test {
 
     address public owner = makeAddr("owner");
     address public user = makeAddr("user");
+    address public user2 = makeAddr("user2");
 
     function setUp() external {
         vm.startPrank(owner);
@@ -108,5 +109,36 @@ contract RebaseTokenTest is Test {
         uint256 finalTokenBalance = rebaseToken.balanceOf(user);
         console.log("Final token balance:", finalTokenBalance);
         assertEq(finalTokenBalance, 0);
+    }
+
+    function testTransfer(uint256 _amount, uint256 _amountToSend) public {
+        _amount = bound(_amount, 1e5, type(uint32).max);
+        _amountToSend = bound(_amountToSend, _amount / 2, _amount);
+
+        vm.deal(user, _amount);
+        vm.prank(user);
+        vault.deposit{value: _amount}();
+
+        uint256 userStartBalance = rebaseToken.balanceOf(user);
+        console.log("User start balance:", userStartBalance);
+        uint256 user2StartBalance = rebaseToken.balanceOf(user2);
+        console.log("User2 start balance:", user2StartBalance);
+        assertEq(userStartBalance, _amount);
+        assertEq(user2StartBalance, 0);
+
+        vm.prank(owner);
+        rebaseToken.setInterestRate(4e10);
+
+        vm.prank(user);
+        rebaseToken.transfer(user2, _amountToSend);
+        uint256 userBalanceAfterTransfer = rebaseToken.balanceOf(user);
+        console.log("User balance after transfer:", userBalanceAfterTransfer);
+        uint256 user2BalanceAfterTransfer = rebaseToken.balanceOf(user2);
+        console.log("User2 balance after transfer:", user2BalanceAfterTransfer);
+        assertEq(userBalanceAfterTransfer, userStartBalance - _amountToSend);
+        assertEq(user2BalanceAfterTransfer, _amountToSend);
+
+        assertEq(rebaseToken.getUserInterestRate(user), 5e10);
+        assertEq(rebaseToken.getUserInterestRate(user2), 5e10);
     }
 }
