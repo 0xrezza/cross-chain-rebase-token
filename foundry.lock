@@ -8,6 +8,12 @@
   "lib/chainlink-ccip": {
     "rev": "73034d28028f44c48ec00eeb788ae494bca2dec9"
   },
+  "lib/chainlink-local": {
+    "tag": {
+      "name": "v0.2.5-beta.0",
+      "rev": "9fbeafb68cef6adbdd062e96d6f6dbc4cdb27142"
+    }
+  },
   "lib/forge-std": {
     "tag": {
       "name": "v1.10.0",

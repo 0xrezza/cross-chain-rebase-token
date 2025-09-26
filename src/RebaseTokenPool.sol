@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.30;
+pragma solidity ^0.8.24;
 
 import {Pool} from "@ccip/contracts/src/v0.8/ccip/libraries/Pool.sol";
 import {TokenPool} from "@ccip/contracts/src/v0.8/ccip/pools/TokenPool.sol";
@@ -9,7 +9,7 @@ import {IRebaseToken} from "./interfaces/IRebaseToken.sol";
 
 contract RebaseTokenPool is TokenPool {
     constructor(IERC20 token, address[] memory allowlist, address rmnProxy, address router)
-        TokenPool(token, 18, allowlist, rmnProxy, router)
+        TokenPool(token,  allowlist, rmnProxy, router)
     {}
 
     /// @notice burns the tokens on the source chain
